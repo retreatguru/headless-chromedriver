@@ -1,16 +1,20 @@
-FROM alpine:edge
+FROM selenium/standalone-chrome:latest
 
-# install chromium and chromedriver
-RUN apk add --no-cache \
-    dumb-init \
-    chromium \
-    chromium-chromedriver
+USER root
 
-# replace chromium binary with a script that has some default options
-RUN mv /usr/lib/chromium/chrome /usr/lib/chromium/chrome-bin
-COPY chrome /usr/lib/chromium/
+# Install dumb-init
+RUN apt-get update && apt-get install -y dumb-init
 
-# run chromedriver under dumb-init to handle signals correctly
+# Move original Chrome binary aside
+RUN mv /opt/google/chrome/google-chrome /opt/google/chrome/google-chrome-bin
+
+# Copy your custom Chrome launcher
+COPY chrome /opt/google/chrome/google-chrome
+RUN chmod +x /opt/google/chrome/google-chrome
+
+# Expose port 4444 for chromedriver
 EXPOSE 4444
+
+# Replace entrypoint to use dumb-init and launch chromedriver manually
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["chromedriver", "--port=4444", "--whitelisted-ips="]
